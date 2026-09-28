@@ -215,12 +215,14 @@ A few Logseq properties are treated specially:
 | `public:: true`            | –                 | only public pages are exported                                      |
 | `title::` / `hugo-title::` | `title`           | `hugo-title` wins; otherwise the page name is used                  |
 | `slug::`                   | `slug`            | URL segment within the section, e.g. `friends` -> `/pages/friends/` |
-| `hugo-url::`               | `url`             | full output path, e.g. `/friends/`                                  |
+| `url::`                    | `url`             | full output path, e.g. `/friends/` for a standalone page            |
+| `link::`                   | `link`            | plain passthrough, use it for external/source links                 |
 
-`slug`/`hugo-url` are independent of the title: the page name drives the
-title, the slug drives the URL. Any other property is passed through to Hugo
-verbatim. Hugo treats `url` as a permalink override, so avoid a plain `url::`
-property on public pages unless that is intended.
+`slug`/`url` are independent of the title: the page name drives the title,
+the slug drives the URL. Every other property is passed through to Hugo
+verbatim, so `url` and `slug` are just Hugo's native front matter keys. Use
+`link::` rather than `url::` for external source links, because Hugo treats
+`url` as a permalink override.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
