@@ -41,8 +41,10 @@
         <li><a href="#meta-data">Meta-data</a></li>
         <li><a href="#configuring_hugo">Configuring Hugo</a></li>
         <li><a href="#admonitions">Admonitions</a></li>
+        <li><a href="#property-conventions">Property conventions</a></li>
       </ul>
     </li>
+    <li><a href="#command-line-offline-export">Command line (offline export)</a></li>
     <li><a href="#issues">Issues</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -201,6 +203,52 @@ And they should contain something along the lines of:
 ```html
 <div class="caution {{ .Get 0 }}">{{ .Inner | $.Page.RenderString }}</div>
 ```
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+### Property conventions
+
+A few Logseq properties are treated specially:
+
+| Logseq property            | Hugo front matter | Notes                                                               |
+| -------------------------- | ----------------- | ------------------------------------------------------------------- |
+| `public:: true`            | –                 | only public pages are exported                                      |
+| `title::` / `hugo-title::` | `title`           | `hugo-title` wins; otherwise the page name is used                  |
+| `slug::`                   | `slug`            | URL segment within the section, e.g. `friends` -> `/pages/friends/` |
+| `hugo-url::`               | `url`             | full output path, e.g. `/friends/`                                  |
+
+`slug`/`hugo-url` are independent of the title: the page name drives the
+title, the slug drives the URL. Any other property is passed through to Hugo
+verbatim. Hugo treats `url` as a permalink override, so avoid a plain `url::`
+property on public pages unless that is intended.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+## Command line (offline export)
+
+The same conversion can be run as a CLI that reads a Logseq graph directory
+directly, so Logseq does not need to be running:
+
+```bash
+npm run build:cli
+node dist/cli.mjs export --graph ~/Documents/Logseq --out .
+```
+
+| Flag                  | Description                                                          |
+| --------------------- | -------------------------------------------------------------------- |
+| `--graph <dir>`       | Logseq graph directory (required)                                    |
+| `--out <dir>`         | output root (default: current directory)                             |
+| `--config <file>`     | JSON file with settings overrides (same keys as the plugin settings) |
+| `--pages-dir <dir>`   | pages output directory (default `content/pages`)                     |
+| `--journal-dir <dir>` | journal output directory (default `content/posts`)                   |
+| `--assets-dir <dir>`  | assets output directory (default `assets`)                           |
+| `--clean`             | delete previously generated files that were not regenerated          |
+| `--dry-run`           | print what would be written without touching the filesystem          |
+| `--quiet`             | suppress progress output                                             |
+
+Unlike `unzip`, the CLI can clean stale output: a manifest is written to
+`<out>/.schrodinger-manifest.json`, and `--clean` removes files from the
+previous run that are no longer generated.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
