@@ -97,12 +97,17 @@ async function parseMeta(
     propList = curPage?.page.properties;
   }
   //Title
-  //FIXME is filename used?
-  if (logseq.settings.leafTitle) {
-    propList.title = curPage.page["original-name"].split("/").slice(-1)[0];
-  } else {
-    propList.title = curPage.page["original-name"];
+  //Keep an explicit title from Logseq, only fall back to the page name
+  if (propList["hugo-title"] != undefined && propList["hugo-title"] !== "") {
+    propList.title = propList["hugo-title"];
+  } else if (propList.title == undefined || propList.title === "") {
+    if (logseq.settings.leafTitle) {
+      propList.title = curPage.page["original-name"].split("/").slice(-1)[0];
+    } else {
+      propList.title = curPage.page["original-name"];
+    }
   }
+  delete propList["hugo-title"];
   if (titleDetails.length > 0) {
     propList.title = titleDetails[0].noteName;
     propList.fileName = titleDetails[1].hugoFileName;
