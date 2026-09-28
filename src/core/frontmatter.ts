@@ -126,9 +126,6 @@ export function buildFrontMatter(input: FrontMatterInput): string {
     (props["lastmod"] as string | undefined) ??
     (page.updatedAt ? hugoDate(page.updatedAt) : undefined);
 
-  const slug = props["hugo-slug"] ?? props["slug"];
-  const url = props["hugo-url"];
-
   for (const key of [
     "public",
     "filters",
@@ -139,9 +136,6 @@ export function buildFrontMatter(input: FrontMatterInput): string {
     "category",
     "date",
     "lastmod",
-    "hugo-slug",
-    "slug",
-    "hugo-url",
   ]) {
     delete props[key];
   }
@@ -151,8 +145,6 @@ export function buildFrontMatter(input: FrontMatterInput): string {
   if (lastMod) pairs.push(["lastMod", lastMod]);
   pairs.push(["tags", tags]);
   pairs.push(["categories", categories]);
-  if (slug) pairs.push(["slug", slug]);
-  if (url) pairs.push(["url", url]);
   if ("alias" in props) props["alias"] = asArray(props["alias"]);
   if ("aliases" in props) props["aliases"] = asArray(props["aliases"]);
   for (const [key, value] of Object.entries(props)) pairs.push([key, value]);
