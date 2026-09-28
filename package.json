@@ -3,12 +3,17 @@
   "version": "1.3.2",
   "description": "An awesome logseq plugin to export to Hugo Static sites and jumpstart your digital garden 🌱!",
   "main": "dist/index.html",
+  "bin": {
+    "schrodinger": "./dist/cli.mjs"
+  },
   "targets": {
     "main": false
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "parcel build --no-source-maps index.html --public-url ./"
+    "build": "npm run build:plugin && npm run build:cli",
+    "build:plugin": "parcel build --no-source-maps index.html --public-url ./",
+    "build:cli": "esbuild src/cli/index.ts --bundle --platform=node --format=esm --outfile=dist/cli.mjs"
   },
   "keywords": [],
   "author": "Aryan Sawhney & Alex Qwxlea",
@@ -33,6 +38,7 @@
     "autoprefix": "^1.0.1",
     "autoprefixer": "^10.4.2",
     "buffer": "^6.0.3",
+    "esbuild": "^0.25.0",
     "parcel": "^2.0.0",
     "postcss-cli": "^9.1.0",
     "postcss-import": "^14.0.2"
