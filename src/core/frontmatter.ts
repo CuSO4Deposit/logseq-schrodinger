@@ -87,8 +87,8 @@ export interface FrontMatterInput {
 
 export function resolveTitle(page: RawPage, settings: Settings): string {
   const props = page.properties;
-  if (typeof props["hugo-title"] === "string" && props["hugo-title"] !== "") {
-    return props["hugo-title"];
+  if (typeof props["blog-title"] === "string" && props["blog-title"] !== "") {
+    return props["blog-title"];
   }
   if (typeof props["title"] === "string" && props["title"] !== "") {
     return props["title"];
@@ -129,7 +129,7 @@ export function buildFrontMatter(input: FrontMatterInput): string {
   for (const key of [
     "public",
     "filters",
-    "hugo-title",
+    "blog-title",
     "title",
     "tags",
     "categories",

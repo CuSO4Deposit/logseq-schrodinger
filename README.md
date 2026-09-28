@@ -210,19 +210,21 @@ And they should contain something along the lines of:
 
 A few Logseq properties are treated specially:
 
-| Logseq property            | Hugo front matter | Notes                                                               |
-| -------------------------- | ----------------- | ------------------------------------------------------------------- |
-| `public:: true`            | –                 | only public pages are exported                                      |
-| `title::` / `hugo-title::` | `title`           | `hugo-title` wins; otherwise the page name is used                  |
-| `slug::`                   | `slug`            | URL segment within the section, e.g. `friends` -> `/pages/friends/` |
-| `url::`                    | `url`             | full output path, e.g. `/friends/` for a standalone page            |
-| `link::`                   | `link`            | plain passthrough, use it for external/source links                 |
+| Logseq property | Hugo front matter | Notes                                                               |
+| --------------- | ----------------- | ------------------------------------------------------------------- |
+| `public:: true` | –                 | only public pages are exported                                      |
+| `blog-title::`  | `title`           | Hugo title; the Logseq page name is left untouched                  |
+| `slug::`        | `slug`            | URL segment within the section, e.g. `friends` -> `/pages/friends/` |
+| `url::`         | `url`             | full output path, e.g. `/friends/` for a standalone page            |
+| `link::`        | `link`            | plain passthrough, use it for external/source links                 |
 
-`slug`/`url` are independent of the title: the page name drives the title,
-the slug drives the URL. Every other property is passed through to Hugo
-verbatim, so `url` and `slug` are just Hugo's native front matter keys. Use
-`link::` rather than `url::` for external source links, because Hugo treats
-`url` as a permalink override.
+`slug`/`url` are independent of the title: `blog-title` drives the Hugo
+title (falling back to the page name), while `slug`/`url` drive the URL.
+Every other property is passed through to Hugo verbatim, so `url` and `slug`
+are just Hugo's native front matter keys. Use `link::` rather than `url::`
+for external source links, because Hugo treats `url` as a permalink
+override. Avoid Logseq's own `title::`, which renames the page in Logseq;
+use `blog-title::` instead.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

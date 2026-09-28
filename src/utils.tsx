@@ -98,8 +98,8 @@ async function parseMeta(
   }
   //Title
   //Keep an explicit title from Logseq, only fall back to the page name
-  if (propList["hugo-title"] != undefined && propList["hugo-title"] !== "") {
-    propList.title = propList["hugo-title"];
+  if (propList["blog-title"] != undefined && propList["blog-title"] !== "") {
+    propList.title = propList["blog-title"];
   } else if (propList.title == undefined || propList.title === "") {
     if (logseq.settings.leafTitle) {
       propList.title = curPage.page["original-name"].split("/").slice(-1)[0];
@@ -107,7 +107,7 @@ async function parseMeta(
       propList.title = curPage.page["original-name"];
     }
   }
-  delete propList["hugo-title"];
+  delete propList["blog-title"];
   if (titleDetails.length > 0) {
     propList.title = titleDetails[0].noteName;
     propList.fileName = titleDetails[1].hugoFileName;
