@@ -53,7 +53,7 @@ function pruneEmptyParents(filePath: string, stopAt: string): void {
 }
 
 function main(): void {
-  const { values } = parseArgs({
+  const { values, positionals } = parseArgs({
     options: {
       graph: { type: "string" },
       out: { type: "string" },
@@ -66,11 +66,19 @@ function main(): void {
       quiet: { type: "boolean", default: false },
       help: { type: "boolean", default: false },
     },
-    allowPositionals: false,
+    allowPositionals: true,
   });
 
   if (values.help) {
     process.stdout.write(USAGE);
+    return;
+  }
+
+  const command = positionals[0] ?? "export";
+  if (command !== "export" || positionals.length > 1) {
+    process.stderr.write(`error: unknown command: ${positionals.join(" ")}\n\n`);
+    process.stderr.write(USAGE);
+    process.exitCode = 1;
     return;
   }
 
