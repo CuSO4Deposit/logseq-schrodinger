@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { parseArgs } from "node:util";
@@ -7,6 +8,15 @@ import { Settings } from "../core/types";
 import { loadGraph, resolveAssetPath } from "../sources/file";
 
 const MANIFEST = ".schrodinger-manifest.json";
+
+interface ManifestEntry {
+  hash: string;
+  date?: string;
+  lastMod?: string;
+}
+type Manifest = Record<string, ManifestEntry>;
+
+const FRONT_MATTER_DATE_LINE = /^(date|lastMod|lastmod):/;
 
 const USAGE = `logseq-schrodinger CLI
 
@@ -50,6 +60,60 @@ function pruneEmptyParents(filePath: string, stopAt: string): void {
     }
     current = path.dirname(current);
   }
+}
+
+function frontMatterRange(content: string): [number, number] | undefined {
+  if (!content.startsWith("---")) return undefined;
+  const end = content.indexOf("\n---", 3);
+  if (end === -1) return undefined;
+  return [3, end];
+}
+
+function stableContent(content: string): string {
+  const range = frontMatterRange(content);
+  if (!range) return content;
+  const [start, end] = range;
+  const lines = content
+    .slice(start, end)
+    .split("\n")
+    .filter((line) => !FRONT_MATTER_DATE_LINE.test(line));
+  return content.slice(0, start) + lines.join("\n") + content.slice(end);
+}
+
+function contentHash(content: string): string {
+  return createHash("sha256").update(stableContent(content)).digest("hex");
+}
+
+function readDates(content: string): { date?: string; lastMod?: string } {
+  const range = frontMatterRange(content);
+  if (!range) return {};
+  const dates: { date?: string; lastMod?: string } = {};
+  for (const line of content.slice(range[0], range[1]).split("\n")) {
+    const match = /^(date|lastMod|lastmod):\s*(.*)$/.exec(line);
+    if (!match) continue;
+    if (match[1] === "date") dates.date = match[2].trim();
+    else dates.lastMod = match[2].trim();
+  }
+  return dates;
+}
+
+function setDates(
+  content: string,
+  dates: { date?: string; lastMod?: string },
+): string {
+  const range = frontMatterRange(content);
+  if (!range) return content;
+  const [start, end] = range;
+  const lines = content.slice(start, end).split("\n");
+  const set = (key: string, value: string | undefined) => {
+    if (!value) return;
+    const index = lines.findIndex((line) => line.startsWith(`${key}:`));
+    if (index === -1) lines.push(`${key}: ${value}`);
+    else lines[index] = `${key}: ${value}`;
+  };
+  set("date", dates.date);
+  set("lastMod", dates.lastMod);
+  return content.slice(0, start) + lines.join("\n") + content.slice(end);
 }
 
 function main(): void {
@@ -126,17 +190,36 @@ function main(): void {
       resolveBlockRef: (uuid) => source.blockRefs.get(uuid.toLowerCase()),
     });
 
+    const manifestPath = path.join(outDir, MANIFEST);
+    const previousRaw = readJson<unknown>(manifestPath);
+    const previous: Manifest =
+      previousRaw &&
+      typeof previousRaw === "object" &&
+      !Array.isArray(previousRaw)
+        ? (previousRaw as Manifest)
+        : {};
+
     const written: string[] = [];
+    const manifest: Manifest = {};
 
     for (const file of result.files) {
+      let content = file.content;
+      const hash = contentHash(content);
+      const prior = previous[file.path];
+      if (prior && prior.hash === hash && (prior.date || prior.lastMod)) {
+        // The page did not change; the mtime may have been reset by a copy or
+        // sync, so keep the dates we published last time.
+        content = setDates(content, { date: prior.date, lastMod: prior.lastMod });
+      }
       const target = path.join(outDir, file.path);
       if (dryRun) {
         log(`would write ${file.path}`);
       } else {
         ensureDir(path.dirname(target));
-        fs.writeFileSync(target, file.content);
+        fs.writeFileSync(target, content);
       }
       written.push(file.path);
+      manifest[file.path] = { hash, ...readDates(content) };
     }
 
     let missingAssets = 0;
@@ -155,14 +238,12 @@ function main(): void {
         fs.copyFileSync(from, target);
       }
       written.push(asset.outPath);
+      manifest[asset.outPath] = { hash: "" };
     }
-
-    const manifestPath = path.join(outDir, MANIFEST);
-    const previous = readJson<string[]>(manifestPath) ?? [];
 
     if (clean && !dryRun) {
       const current = new Set(written);
-      for (const relative of previous) {
+      for (const relative of Object.keys(previous)) {
         if (current.has(relative)) continue;
         const stale = path.join(outDir, relative);
         if (fs.existsSync(stale)) {
@@ -175,7 +256,7 @@ function main(): void {
 
     if (!dryRun) {
       ensureDir(outDir);
-      fs.writeFileSync(manifestPath, `${JSON.stringify(written, null, 2)}\n`);
+      fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
     }
 
     log(
